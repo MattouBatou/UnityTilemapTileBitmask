@@ -13,7 +13,7 @@ TagManager:
   - UI
   - 
   - 
-  - 
+  - 4-bitMap
   - 
   - 
   - 
@@ -40,4 +40,7 @@ TagManager:
   m_SortingLayers:
   - name: Default
     uniqueID: 0
+    locked: 0
+  - name: 4-bitMap
+    uniqueID: 3427026437
     locked: 0
