@@ -11,9 +11,17 @@ namespace UnityEngine.Tilemaps {
     public class BitMask4Tile:TileBase {
 
         public Sprite[] m_BitSprites;
+        public Tile.ColliderType m_TileColliderType;
 
-        public override void GetTileData(Vector3Int location, ITilemap tileMap, ref TileData tileData) {
+        public override void GetTileData(Vector3Int location, ITilemap tilemap, ref TileData tileData) {
+            base.GetTileData(location, tilemap, ref tileData);
 
+            if (m_BitSprites == null || m_BitSprites.Length <= 0) return;
+
+            tileData.transform = Matrix4x4.identity;
+            tileData.color = Color.white;
+            tileData.sprite = m_BitSprites[0];
+            tileData.colliderType = m_TileColliderType;
         }
 
 #if UNITY_EDITOR
@@ -34,7 +42,7 @@ namespace UnityEngine.Tilemaps {
     [CanEditMultipleObjects]
     internal class BitMask4TileEditor:Editor {
         private BitMask4Tile tile { get { return (target as BitMask4Tile); } }
-        private const int m_bitSpriteCount = 16;
+        private const int k_bitSpriteCount = 16;
 
         private const string s_spriteIcon0 = "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQAQMAAAAlPW0iAAAABlBMVEUB/wAAAACkX63mAAAAFklEQVQI12MAgvp/IJTAhgdB1ADVAgDvdAnxdKVuwAAAAABJRU5ErkJggg==";
         private const string s_spriteIcon1 = "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQAQMAAAAlPW0iAAAABlBMVEUB/wAAAACkX63mAAAAFElEQVQI12MAggQ2wqj+HxAB1QIAlMEHw4qUPRAAAAAASUVORK5CYII=";
@@ -57,7 +65,7 @@ namespace UnityEngine.Tilemaps {
         public static Texture2D[] spriteIcons {
             get {
                 if(s_spriteIcons == null) {
-                    s_spriteIcons = new Texture2D[m_bitSpriteCount];
+                    s_spriteIcons = new Texture2D[k_bitSpriteCount];
                     s_spriteIcons[0] = Base64ToTexture(s_spriteIcon0);
                     s_spriteIcons[1] = Base64ToTexture(s_spriteIcon1);
                     s_spriteIcons[2] = Base64ToTexture(s_spriteIcon2);
@@ -79,40 +87,32 @@ namespace UnityEngine.Tilemaps {
             }
         }
 
-        const float k_ObjectFieldElementHeight = 64f;
-        const float k_PaddingBetweenFields = 13f;
-        const float k_SingleLineHeight = 8f;
-        const float k_InspectorHeaderHeight = 48f;
-        const float k_LabelWidth = 53f;
-        const float k_tHW = 16f;
-        private float k_TextureY = 125f;
-        private Rect r;
-        private float lastY = 0f;
-
-        float screenAspectRatio = ((float)Screen.height / (float)Screen.width);
+        const float k_tHW = 16f*4f;
 
         public override void OnInspectorGUI() {
+
+            createEditorLayout();
+        }
+
+        private void createEditorLayout() {
+            serializedObject.Update();
+
             EditorGUI.BeginChangeCheck();
 
-            if (tile.m_BitSprites == null || tile.m_BitSprites.Length != m_bitSpriteCount) {
-                Array.Resize<Sprite>(ref tile.m_BitSprites, m_bitSpriteCount);
+            if (tile.m_BitSprites == null || tile.m_BitSprites.Length != k_bitSpriteCount) {
+                Array.Resize<Sprite>(ref tile.m_BitSprites, k_bitSpriteCount);
             }
 
             EditorGUILayout.LabelField("Place sprites to match the example images.");
-            EditorGUILayout.LabelField("Sprites required " + m_bitSpriteCount);
+            EditorGUILayout.LabelField("Sprites required " + k_bitSpriteCount);
             EditorGUILayout.Space();
 
-            for (int i = 0; i < m_bitSpriteCount; i++) {
-                if (i == 0) {
-                    r = new Rect(k_tHW + k_LabelWidth + k_PaddingBetweenFields, k_TextureY, k_tHW, k_tHW);
-                    lastY = k_TextureY;
-                } else {
-                    r = new Rect(k_tHW + k_LabelWidth + k_PaddingBetweenFields, (lastY + 200f + k_SingleLineHeight) * screenAspectRatio, k_tHW, k_tHW);
-                    lastY += (200f + k_SingleLineHeight) * screenAspectRatio;
-                }
-
-                GUI.DrawTexture(r, spriteIcons[i]);
+            for (int i = 0; i < k_bitSpriteCount; i++) {
+                Rect r = (Rect)EditorGUILayout.BeginVertical();
                 tile.m_BitSprites[i] = (Sprite)EditorGUILayout.ObjectField("Sprite " + (i), tile.m_BitSprites[i], typeof(Sprite), false, null);
+                spriteIcons[i].filterMode = FilterMode.Point;
+                EditorGUI.DrawPreviewTexture(new Rect((EditorGUIUtility.currentViewWidth) - (k_tHW * 2.5f), r.y, k_tHW, k_tHW), spriteIcons[i]);
+                EditorGUILayout.EndVertical();
             }
 
             EditorGUI.EndChangeCheck();
