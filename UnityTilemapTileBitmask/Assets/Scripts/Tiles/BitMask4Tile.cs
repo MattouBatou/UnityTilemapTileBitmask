@@ -50,56 +50,87 @@ namespace UnityEngine.Tilemaps {
             tileData.color = Color.white;
             tileData.colliderType = m_TileColliderType;
 
-            // 1 is up, right
+            // 1 is x: right y: up.
             int mask = NeighboringTileAtPos(tilemap, location + new Vector3Int(-1, 1, 0)) ? 1 : 0;  // nw
-            mask += NeighboringTileAtPos(tilemap, location + new Vector3Int(0, 1, 0)) ? 2 : 0;     // n
-            mask += NeighboringTileAtPos(tilemap, location + new Vector3Int(1, 1, 0)) ? 4 : 0;    // ne
-            mask += NeighboringTileAtPos(tilemap, location + new Vector3Int(-1, 0, 0)) ? 8 : 0;      // w
-            mask += NeighboringTileAtPos(tilemap, location + new Vector3Int(1, 0, 0)) ? 16 : 0;    // e
-            mask += NeighboringTileAtPos(tilemap, location + new Vector3Int(-1, -1, 0)) ? 32 : 0;    // sw
-            mask += NeighboringTileAtPos(tilemap, location + new Vector3Int(0, -1, 0)) ? 64 : 0;     // s
-            mask += NeighboringTileAtPos(tilemap, location + new Vector3Int(1, -1, 0)) ? 128 : 0;    // se
+            mask += NeighboringTileAtPos(tilemap, location + new Vector3Int(0, 1, 0)) ? 2 : 0;      // n
+            mask += NeighboringTileAtPos(tilemap, location + new Vector3Int(1, 1, 0)) ? 4 : 0;      // ne
+            mask += NeighboringTileAtPos(tilemap, location + new Vector3Int(-1, 0, 0)) ? 8 : 0;     // w
+            mask += NeighboringTileAtPos(tilemap, location + new Vector3Int(1, 0, 0)) ? 16 : 0;     // e
+            mask += NeighboringTileAtPos(tilemap, location + new Vector3Int(-1, -1, 0)) ? 32 : 0;   // sw
+            mask += NeighboringTileAtPos(tilemap, location + new Vector3Int(0, -1, 0)) ? 64 : 0;    // s
+            mask += NeighboringTileAtPos(tilemap, location + new Vector3Int(1, -1, 0)) ? 128 : 0;   // se
 
-            //byte original = (byte)mask;
-            //if ((original | 254) < 255) { mask = mask & 125; }
-            //if ((original | 251) < 255) { mask = mask & 245; }
-            //if ((original | 239) < 255) { mask = mask & 215; }
-            //if ((original | 191) < 255) { mask = mask & 95; }
+            int index = NeighborsToTileIndexTerrain(mask);
 
-            int index = NeighborsToTileIndex(mask);
+            //if(index == 0) {
+            //    index = NeighborsToTileIndexPipe(mask);
+            //}
+
             if (index >= 0 && index < m_BitSprites.Length && NeighboringTileAtPos(tilemap, location)) {
 
                 tileData.sprite = m_BitSprites[index];
             }
         }
 
-        private int NeighborsToTileIndex(int mask) {
+        private int NeighborsToTileIndexTerrain(int mask) {
+            // Cases grouped by sprite selection.
+
             switch (mask) {
-                case 1: return 3;
+
+                case 15:                // w,nw,n,ne
+                case 11: return 3;      // w,nw,n
+
+                case 23:                // nw,n,ne,e
+                case 150:               // nw,n,sw,w
+                case 22: return 5;      // n,ne,e
+
+                case 31:                // e,ne,n,nw,w
                 case 7:                 // ne,n,nw
                 case 2: return 7;       // n
 
+                case 104: return 10;    // w,sw,s
+
+                case 107:               // n,nw,w,sw,s
                 case 41:                // nw,w,sw
                 case 8: return 11;      // e
 
+                case 208: return 12;    // e,se,s
+
+                case 214:               // n,ne,e,se,s
                 case 148:               // ne,e,se
                 case 16: return 13;     // w
-                               
+
+                case 248:               // w,sw,s,se,e
                 case 224:               // se,s,sw
                 case 64: return 14;     // s
 
-                // Used for pipe corners with ends
-                case 10: return 3;     // w,s
-                case 72: return 10;       // w,s
-                case 18: return 5;      // n,e
-                case 80: return 12;     // e,s
-
-                case 22: return 5;      // n,ne,e
-                case 208: return 12;    // e,se,s
-                case 104: return 10;    // w,sw,s
-                case 11: return 3;     // w,nw,n
-
+                case 223:               // w,nw,n,ne,e,se,s
+                case 255:               // all
                 case 90: return 15;     // n,s,e,w
+            }
+            return 0;
+        }
+
+        private int NeighborsToTileIndexPipe(int mask) {
+            // Cases grouped by sprite selection.
+
+            switch (mask) {
+
+                case 2: return 1;       // n
+
+                case 16: return 2;      // e
+
+                case 10: return 3;      // w,s
+
+                case 8: return 4;       // w
+
+                case 18: return 5;      // n,e
+
+                case 64: return 8;      // s
+
+                case 72: return 10;     // w,s
+
+                case 80: return 12;     // e,s
             }
             return 0;
         }
