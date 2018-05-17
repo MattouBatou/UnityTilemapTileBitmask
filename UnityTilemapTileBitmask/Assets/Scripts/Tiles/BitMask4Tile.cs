@@ -51,14 +51,14 @@ namespace UnityEngine.Tilemaps {
             tileData.colliderType = m_TileColliderType;
 
             // 1 is up, right
-            int mask = NeighboringTileAtPos(tilemap, location + new Vector3Int(1, 1, 0)) ? 1 : 0;  // nw
+            int mask = NeighboringTileAtPos(tilemap, location + new Vector3Int(-1, 1, 0)) ? 1 : 0;  // nw
             mask += NeighboringTileAtPos(tilemap, location + new Vector3Int(0, 1, 0)) ? 2 : 0;     // n
-            mask += NeighboringTileAtPos(tilemap, location + new Vector3Int(-1, 1, 0)) ? 4 : 0;    // ne
-            mask += NeighboringTileAtPos(tilemap, location + new Vector3Int(-1, 0, 0)) ? 8 : 0;      // e
-            mask += NeighboringTileAtPos(tilemap, location + new Vector3Int(1, 0, 0)) ? 16 : 0;    // w
-            mask += NeighboringTileAtPos(tilemap, location + new Vector3Int(1, -1, 0)) ? 32 : 0;    // sw
+            mask += NeighboringTileAtPos(tilemap, location + new Vector3Int(1, 1, 0)) ? 4 : 0;    // ne
+            mask += NeighboringTileAtPos(tilemap, location + new Vector3Int(-1, 0, 0)) ? 8 : 0;      // w
+            mask += NeighboringTileAtPos(tilemap, location + new Vector3Int(1, 0, 0)) ? 16 : 0;    // e
+            mask += NeighboringTileAtPos(tilemap, location + new Vector3Int(-1, -1, 0)) ? 32 : 0;    // sw
             mask += NeighboringTileAtPos(tilemap, location + new Vector3Int(0, -1, 0)) ? 64 : 0;     // s
-            mask += NeighboringTileAtPos(tilemap, location + new Vector3Int(-1, -1, 0)) ? 128 : 0;    // se
+            mask += NeighboringTileAtPos(tilemap, location + new Vector3Int(1, -1, 0)) ? 128 : 0;    // se
 
             //byte original = (byte)mask;
             //if ((original | 254) < 255) { mask = mask & 125; }
@@ -79,18 +79,26 @@ namespace UnityEngine.Tilemaps {
                 case 7:                 // ne,n,nw
                 case 2: return 7;       // n
 
-                case 148:               // ne,e,se
+                case 41:                // nw,w,sw
                 case 8: return 11;      // e
 
-                case 41:                // nw,w,sw
+                case 148:               // ne,e,se
                 case 16: return 13;     // w
-
-                case 32: return 12;     // sw
+                               
                 case 224:               // se,s,sw
                 case 64: return 14;     // s
 
-                case 24:                // n,s
-                case 66:                // e,w
+                // Used for pipe corners with ends
+                case 10: return 3;     // w,s
+                case 72: return 10;       // w,s
+                case 18: return 5;      // n,e
+                case 80: return 12;     // e,s
+
+                case 22: return 5;      // n,ne,e
+                case 208: return 12;    // e,se,s
+                case 104: return 10;    // w,sw,s
+                case 11: return 3;     // w,nw,n
+
                 case 90: return 15;     // n,s,e,w
             }
             return 0;
