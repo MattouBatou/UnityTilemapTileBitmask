@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 #if UNITY_EDITOR
@@ -10,18 +12,88 @@ namespace UnityEngine.Tilemaps {
     [Serializable]
     public class BitMask4Tile:TileBase {
 
+        [SerializeField]
         public Sprite[] m_BitSprites;
-        public Tile.ColliderType m_TileColliderType;
+        public Tile.ColliderType m_TileColliderType = Tile.ColliderType.None;
 
         public override void GetTileData(Vector3Int location, ITilemap tilemap, ref TileData tileData) {
             base.GetTileData(location, tilemap, ref tileData);
 
             if (m_BitSprites == null || m_BitSprites.Length <= 0) return;
 
+            UpdateTile(location, tilemap, ref tileData);
+        }
+
+        public override void RefreshTile(Vector3Int location, ITilemap tilemap) {
+            //base.RefreshTile(location, tilemap);
+            checkNeighboringTiles(location, tilemap);
+        }
+
+        // Looks for tiles around this tile and calls RefreshTile on any found.
+        public void checkNeighboringTiles(Vector3Int location, ITilemap tilemap) {
+            for (int yd = -1; yd <= 1; yd++) {
+                for (int xd = -1; xd <= 1; xd++) {
+                    Vector3Int position = new Vector3Int(location.x + xd, location.y + yd, location.z);
+                    if (NeighboringTileAtPos(tilemap, position))
+                        tilemap.RefreshTile(position);
+                }
+            }
+        }
+
+        private bool NeighboringTileAtPos(ITilemap tileMap, Vector3Int position) {
+            TileBase tile = tileMap.GetTile(position);
+            return (tile != null && tile == this);
+        }
+
+        private void UpdateTile(Vector3Int location, ITilemap tilemap, ref TileData tileData) {
             tileData.transform = Matrix4x4.identity;
             tileData.color = Color.white;
-            tileData.sprite = m_BitSprites[0];
             tileData.colliderType = m_TileColliderType;
+
+            // 1 is up, right
+            int mask = NeighboringTileAtPos(tilemap, location + new Vector3Int(1, 1, 0)) ? 1 : 0;  // nw
+            mask += NeighboringTileAtPos(tilemap, location + new Vector3Int(0, 1, 0)) ? 2 : 0;     // n
+            mask += NeighboringTileAtPos(tilemap, location + new Vector3Int(-1, 1, 0)) ? 4 : 0;    // ne
+            mask += NeighboringTileAtPos(tilemap, location + new Vector3Int(-1, 0, 0)) ? 8 : 0;      // e
+            mask += NeighboringTileAtPos(tilemap, location + new Vector3Int(1, 0, 0)) ? 16 : 0;    // w
+            mask += NeighboringTileAtPos(tilemap, location + new Vector3Int(1, -1, 0)) ? 32 : 0;    // sw
+            mask += NeighboringTileAtPos(tilemap, location + new Vector3Int(0, -1, 0)) ? 64 : 0;     // s
+            mask += NeighboringTileAtPos(tilemap, location + new Vector3Int(-1, -1, 0)) ? 128 : 0;    // se
+
+            //byte original = (byte)mask;
+            //if ((original | 254) < 255) { mask = mask & 125; }
+            //if ((original | 251) < 255) { mask = mask & 245; }
+            //if ((original | 239) < 255) { mask = mask & 215; }
+            //if ((original | 191) < 255) { mask = mask & 95; }
+
+            int index = NeighborsToTileIndex(mask);
+            if (index >= 0 && index < m_BitSprites.Length && NeighboringTileAtPos(tilemap, location)) {
+
+                tileData.sprite = m_BitSprites[index];
+            }
+        }
+
+        private int NeighborsToTileIndex(int mask) {
+            switch (mask) {
+                case 1: return 3;
+                case 7:                 // ne,n,nw
+                case 2: return 7;       // n
+
+                case 148:               // ne,e,se
+                case 8: return 11;      // e
+
+                case 41:                // nw,w,sw
+                case 16: return 13;     // w
+
+                case 32: return 12;     // sw
+                case 224:               // se,s,sw
+                case 64: return 14;     // s
+
+                case 24:                // n,s
+                case 66:                // e,w
+                case 90: return 15;     // n,s,e,w
+            }
+            return 0;
         }
 
 #if UNITY_EDITOR
@@ -106,8 +178,12 @@ namespace UnityEngine.Tilemaps {
             EditorGUILayout.LabelField("Place sprites to match the example images.");
             EditorGUILayout.LabelField("Sprites required " + k_bitSpriteCount);
             EditorGUILayout.Space();
+            // TODO: Make editor option to have individual ColliderType values for each sprite. If selected add a ColliderType popup for every sprite.
+            tile.m_TileColliderType = (Tile.ColliderType)EditorGUILayout.EnumPopup("Collider Type", tile.m_TileColliderType);
+            EditorGUILayout.Space();
 
             for (int i = 0; i < k_bitSpriteCount; i++) {
+
                 Rect r = (Rect)EditorGUILayout.BeginVertical();
                 tile.m_BitSprites[i] = (Sprite)EditorGUILayout.ObjectField("Sprite " + (i), tile.m_BitSprites[i], typeof(Sprite), false, null);
                 spriteIcons[i].filterMode = FilterMode.Point;
