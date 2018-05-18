@@ -28,3 +28,4 @@ MonoBehaviour:
   - {fileID: 21300026, guid: 0b798d698ca20264ba459af377d818f7, type: 3}
   - {fileID: 21300028, guid: 0b798d698ca20264ba459af377d818f7, type: 3}
   - {fileID: 21300030, guid: 0b798d698ca20264ba459af377d818f7, type: 3}
+  m_TileColliderType: 0

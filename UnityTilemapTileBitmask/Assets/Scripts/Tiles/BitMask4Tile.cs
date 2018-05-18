@@ -77,36 +77,45 @@ namespace UnityEngine.Tilemaps {
 
             switch (mask) {
 
-                case 15:                // w,nw,n,ne
-                case 11: return 3;      // w,nw,n
+                case 15:                // nw,n,ne,w
+                case 11: return 3;      // nw,n,w
 
                 case 23:                // nw,n,ne,e
                 case 150:               // nw,n,sw,w
                 case 22: return 5;      // n,ne,e
 
-                case 31:                // e,ne,n,nw,w
+                case 190:               // n,ne,e,sw,w
+                case 63:                // nw,n,ne,e,sw,w
+                case 31:                // nw,n,ne,w
                 case 7:                 // ne,n,nw
                 case 2: return 7;       // n
 
-                case 104: return 10;    // w,sw,s
+                case 104: return 10;    // s,sw,w
 
-                case 107:               // n,nw,w,sw,s
+                case 235:               // nw,n,se,s,sw,w
+                case 111:               // nw,n,ne,s,sw,w
+                case 107:               // nw,n,s,sw,w
                 case 41:                // nw,w,sw
                 case 8: return 11;      // e
 
-                case 208: return 12;    // e,se,s
+                case 240:               // e,se,s,sw
+                case 208: return 12;    // s,se,e
 
                 case 214:               // n,ne,e,se,s
+                case 215:               // nw,n,ne,e,se,s
                 case 148:               // ne,e,se
                 case 16: return 13;     // w
 
-                case 248:               // w,sw,s,se,e
+                case 124:               // ne,e,s,sw,w
+                case 248:               // e,se,s,sw,w
                 case 224:               // se,s,sw
                 case 64: return 14;     // s
 
-                case 223:               // w,nw,n,ne,e,se,s
-                case 255:               // all
-                case 90: return 15;     // n,s,e,w
+                case 127:               // nw,n,ne,e,s,sw,w
+                case 223:               // nw,n,ne,e,se,s,w
+                case 90:                // n,s,e,w
+                case 255: return 15;    // all
+
             }
             return 0;
         }
@@ -154,6 +163,9 @@ namespace UnityEngine.Tilemaps {
     internal class BitMask4TileEditor:Editor {
         private BitMask4Tile tile { get { return (target as BitMask4Tile); } }
         private const int k_bitSpriteCount = 16;
+        public int[] m_selectedBitMaskValues = new int[]{0,0,0,0,0,0,0,0,0};
+        public int m_BitMaskTotal = 0;
+        public static readonly int[] k_BitMaskValues = { 1, 2, 4, 8, 0, 16, 32, 64, 128 };
 
         private const string s_spriteIcon0 = "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQAQMAAAAlPW0iAAAABlBMVEUB/wAAAACkX63mAAAAFklEQVQI12MAgvp/IJTAhgdB1ADVAgDvdAnxdKVuwAAAAABJRU5ErkJggg==";
         private const string s_spriteIcon1 = "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQAQMAAAAlPW0iAAAABlBMVEUB/wAAAACkX63mAAAAFElEQVQI12MAggQ2wqj+HxAB1QIAlMEHw4qUPRAAAAAASUVORK5CYII=";
@@ -201,7 +213,6 @@ namespace UnityEngine.Tilemaps {
         const float k_tHW = 16f*4f;
 
         public override void OnInspectorGUI() {
-
             createEditorLayout();
         }
 
@@ -216,21 +227,93 @@ namespace UnityEngine.Tilemaps {
 
             EditorGUILayout.LabelField("Place sprites to match the example images.");
             EditorGUILayout.LabelField("Sprites required " + k_bitSpriteCount);
+
             EditorGUILayout.Space();
+
             // TODO: Make editor option to have individual ColliderType values for each sprite. If selected add a ColliderType popup for every sprite.
             tile.m_TileColliderType = (Tile.ColliderType)EditorGUILayout.EnumPopup("Collider Type", tile.m_TileColliderType);
+
             EditorGUILayout.Space();
 
-            for (int i = 0; i < k_bitSpriteCount; i++) {
+            createBitMaskCalculator();
 
+            for (int i = 0; i < k_bitSpriteCount; i++) {
                 Rect r = (Rect)EditorGUILayout.BeginVertical();
                 tile.m_BitSprites[i] = (Sprite)EditorGUILayout.ObjectField("Sprite " + (i), tile.m_BitSprites[i], typeof(Sprite), false, null);
                 spriteIcons[i].filterMode = FilterMode.Point;
                 EditorGUI.DrawPreviewTexture(new Rect((EditorGUIUtility.currentViewWidth) - (k_tHW * 2.5f), r.y, k_tHW, k_tHW), spriteIcons[i]);
                 EditorGUILayout.EndVertical();
+                EditorGUILayout.Space();
             }
 
             EditorGUI.EndChangeCheck();
+        }
+
+        private void createBitMaskCalculator() {
+            Rect BitMaskFoldoutRect = new Rect(EditorGUIUtility.currentViewWidth-(k_tHW * 1.25f)-20f, 118f, EditorGUIUtility.currentViewWidth, k_tHW*1.25f);
+
+            Rect matrixRect = new Rect(BitMaskFoldoutRect.x, BitMaskFoldoutRect.y, k_tHW*1.25f, k_tHW*1.25f);
+            Handles.color = EditorGUIUtility.isProSkin ? new Color(1f, 1f, 1f, 0.2f) : new Color(0f, 0f, 0f, 0.2f);
+            int index = 0;
+            float w = matrixRect.width / 3f;
+            float h = matrixRect.height / 3f;
+
+            GUIStyle BitMaskValuesStyle = new GUIStyle();
+            BitMaskValuesStyle.alignment = TextAnchor.MiddleCenter;
+            BitMaskValuesStyle.normal.textColor = new Color(1f, 1f, 1f);
+            BitMaskValuesStyle.normal.background = MakeTex((int)w, (int)h, new Color(0.5f, 0.7f, 1f, 0.5f));
+
+            GUIStyle BitMaskTotalStyle = new GUIStyle();
+            BitMaskTotalStyle.alignment = TextAnchor.MiddleCenter;
+            BitMaskTotalStyle.font = Font.CreateDynamicFontFromOSFont("Arial", 20);
+
+
+            // Draw matrix grid
+            for (int y = 0; y <=3; y++) {
+                float top = matrixRect.yMin + y * h;
+                Handles.DrawLine(new Vector3(matrixRect.xMin, top), new Vector3(matrixRect.xMax, top));
+            }
+            for (int x = 0; x <= 3; x++) {
+                float left = matrixRect.xMin + x * w;
+                Handles.DrawLine(new Vector3(left, matrixRect.yMin), new Vector3(left, matrixRect.yMax));
+            }
+            Handles.color = Color.white;
+
+            for (int y = 0; y <= 2; y++) {
+                for (int x = 0; x <= 2; x++) {
+
+                    Rect r = new Rect(matrixRect.x + (w * x) - 1, matrixRect.y + (h * y) - 1, w + 1, h + 1);
+
+                    if (x != 1 || y != 1) {
+                        if (Event.current.type == EventType.MouseDown && r.Contains(Event.current.mousePosition) && Event.current.button == 0) {
+                            GUI.changed = true;
+                            Event.current.Use();
+
+                            if (m_selectedBitMaskValues[index] == 0) {
+                                m_selectedBitMaskValues[index] = 1;
+                            } else {
+                                m_selectedBitMaskValues[index] = 0;
+                            }
+
+                            sumBitMaskValues(index);
+                        }
+
+                        if (m_selectedBitMaskValues[index] == 0) {
+                            BitMaskValuesStyle.normal.background = MakeTex((int)w, (int)h, new Color(0.5f, 0.7f, 1f, 0.5f));
+                        } else {
+                            BitMaskValuesStyle.normal.background = MakeTex((int)w, (int)h, new Color(0.5f, 0.7f, 1f, 1f));
+                        }
+
+                        GUI.Box(r, k_BitMaskValues[index].ToString(), BitMaskValuesStyle);
+                    }
+
+                    index++;
+                }
+            }
+
+            GUI.Box(new Rect(matrixRect.x - (matrixRect.width * 1.625f), matrixRect.y, matrixRect.width, matrixRect.height), m_BitMaskTotal.ToString(), BitMaskTotalStyle);
+
+            for (int i = 0; i < 14; i++) { EditorGUILayout.Space(); }
         }
 
         private static Texture2D Base64ToTexture(string base64) {
@@ -238,6 +321,21 @@ namespace UnityEngine.Tilemaps {
             t.hideFlags = HideFlags.HideAndDontSave;
             t.LoadImage(System.Convert.FromBase64String(base64));
             return t;
+        }
+
+        private Texture2D MakeTex(int width, int height, Color col) {
+            Color[] pix = new Color[width * height];
+            for (int i = 0; i < pix.Length; ++i) {
+                pix[i] = col;
+            }
+            Texture2D result = new Texture2D(width-1, height-1);
+            result.SetPixels(pix);
+            result.Apply();
+            return result;
+        }
+
+        private void sumBitMaskValues(int index) {
+            m_BitMaskTotal += k_BitMaskValues[index] * (m_selectedBitMaskValues[index] == 0 ? -1 : m_selectedBitMaskValues[index]);
         }
     }
 #endif
