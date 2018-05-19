@@ -11,5 +11,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 10ad4585bb184764a989cca70f601af9, type: 3}
   m_Name: SandTerrainArea
   m_EditorClassIdentifier: 
-  m_BitSprites: []
+  m_BitSprites:
+  - {fileID: 21300762, guid: d27c7ef40cde5e74f8d7397f79b336b7, type: 3}
+  - {fileID: 21300680, guid: d27c7ef40cde5e74f8d7397f79b336b7, type: 3}
+  - {fileID: 21300676, guid: d27c7ef40cde5e74f8d7397f79b336b7, type: 3}
+  - {fileID: 21300678, guid: d27c7ef40cde5e74f8d7397f79b336b7, type: 3}
+  - {fileID: 21300484, guid: d27c7ef40cde5e74f8d7397f79b336b7, type: 3}
+  - {fileID: 21300582, guid: d27c7ef40cde5e74f8d7397f79b336b7, type: 3}
+  - {fileID: 21300480, guid: d27c7ef40cde5e74f8d7397f79b336b7, type: 3}
+  - {fileID: 21300578, guid: d27c7ef40cde5e74f8d7397f79b336b7, type: 3}
+  - {fileID: 21300482, guid: d27c7ef40cde5e74f8d7397f79b336b7, type: 3}
+  - {fileID: 21300580, guid: d27c7ef40cde5e74f8d7397f79b336b7, type: 3}
   m_TileColliderType: 0
