@@ -60,15 +60,15 @@ namespace UnityEngine.Tilemaps {
             mask += NeighboringTileAtPos(tilemap, location + new Vector3Int(0, -1, 0)) ? 64 : 0;    // s
             mask += NeighboringTileAtPos(tilemap, location + new Vector3Int(1, -1, 0)) ? 128 : 0;   // se
 
-            int index = NeighborsToTileIndexTerrain(mask);
+            int bitMaskValue = NeighborsToTileIndexTerrain(mask);
 
-            //if(index == 0) {
-            //    index = NeighborsToTileIndexPipe(mask);
+            //if(binDirCellIndex == 0) {
+            //    binDirCellIndex = NeighborsToTileIndexPipe(mask);
             //}
 
-            if (index >= 0 && index < m_BitSprites.Length && NeighboringTileAtPos(tilemap, location)) {
+            if (bitMaskValue >= 0 && bitMaskValue < m_BitSprites.Length && NeighboringTileAtPos(tilemap, location)) {
 
-                tileData.sprite = m_BitSprites[index];
+                tileData.sprite = m_BitSprites[bitMaskValue];
             }
         }
 
@@ -163,10 +163,22 @@ namespace UnityEngine.Tilemaps {
     internal class BitMask4TileEditor:Editor {
         private BitMask4Tile tile { get { return (target as BitMask4Tile); } }
         private const int k_bitSpriteCount = 16;
-        public int[] m_selectedBitMaskValues = new int[]{0,0,0,0,0,0,0,0,0};
-        public int m_BitMaskTotal = 0;
-        public static readonly int[] k_BitMaskValues = { 1, 2, 4, 8, 0, 16, 32, 64, 128 };
 
+        // Binary directonal grid component settings.
+        private int m_bitMaskTotal = 0;
+        private string m_binDirString = "// ";
+        private int[] m_binDirSelectedStates = new int[] { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+        private string[] m_binDirDirections = new string[] { "nw", "n", "ne", "w", "", "e", "sw", "s", "se" };
+        private static readonly int[] k_bitMaskValues = { 1, 2, 4, 8, 0, 16, 32, 64, 128 };
+        private const float k_spriteWH = 16f * 4f;
+
+        // Colors
+        private static readonly Color k_binDirButtonOffColor = new Color(0.5f, 0.7f, 1f, 0.5f);
+        private static readonly Color k_binDirButtonOnColor = new Color(0.5f, 0.7f, 1f, 1f);
+        private static readonly Color k_textWhite = new Color(1f,1f,1f);
+        private static readonly Color k_cellTextDarkBlue = new Color(0f, 0.2f, 0.5f, 0.5f);
+
+        // Tile Example Sprite Icons
         private const string s_spriteIcon0 = "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQAQMAAAAlPW0iAAAABlBMVEUB/wAAAACkX63mAAAAFklEQVQI12MAgvp/IJTAhgdB1ADVAgDvdAnxdKVuwAAAAABJRU5ErkJggg==";
         private const string s_spriteIcon1 = "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQAQMAAAAlPW0iAAAABlBMVEUB/wAAAACkX63mAAAAFElEQVQI12MAggQ2wqj+HxAB1QIAlMEHw4qUPRAAAAAASUVORK5CYII=";
         private const string s_spriteIcon2 = "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQAQMAAAAlPW0iAAAABlBMVEUB/wAAAACkX63mAAAAFUlEQVQI12MAgvp/IMTAhgfB1DAAAJOUBjEmAwzVAAAAAElFTkSuQmCC";
@@ -185,7 +197,7 @@ namespace UnityEngine.Tilemaps {
         private const string s_spriteIcon15 = "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQAQMAAAAlPW0iAAAAA1BMVEUB/wA1nKqfAAAAC0lEQVQI12MgEQAAADAAAWV61nwAAAAASUVORK5CYII=";
 
         private static Texture2D[] s_spriteIcons;
-        public static Texture2D[] spriteIcons {
+        private static Texture2D[] spriteIcons {
             get {
                 if(s_spriteIcons == null) {
                     s_spriteIcons = new Texture2D[k_bitSpriteCount];
@@ -210,8 +222,6 @@ namespace UnityEngine.Tilemaps {
             }
         }
 
-        const float k_tHW = 16f*4f;
-
         public override void OnInspectorGUI() {
             createEditorLayout();
         }
@@ -221,6 +231,7 @@ namespace UnityEngine.Tilemaps {
 
             EditorGUI.BeginChangeCheck();
 
+            // Reset size of sprite array if it has somehow changed (Defensive coding for future users)
             if (tile.m_BitSprites == null || tile.m_BitSprites.Length != k_bitSpriteCount) {
                 Array.Resize<Sprite>(ref tile.m_BitSprites, k_bitSpriteCount);
             }
@@ -230,18 +241,19 @@ namespace UnityEngine.Tilemaps {
 
             EditorGUILayout.Space();
 
-            // TODO: Make editor option to have individual ColliderType values for each sprite. If selected add a ColliderType popup for every sprite.
+            // TODO: Make editor option to have individual ColliderType values for each sprite. If selected add a ColliderType popup for every sprite
             tile.m_TileColliderType = (Tile.ColliderType)EditorGUILayout.EnumPopup("Collider Type", tile.m_TileColliderType);
 
             EditorGUILayout.Space();
 
             createBitMaskCalculator();
 
+            // Draw actual tile sprite fields. These are used to assign the correct sprite to the tile when placing
             for (int i = 0; i < k_bitSpriteCount; i++) {
                 Rect r = (Rect)EditorGUILayout.BeginVertical();
                 tile.m_BitSprites[i] = (Sprite)EditorGUILayout.ObjectField("Sprite " + (i), tile.m_BitSprites[i], typeof(Sprite), false, null);
                 spriteIcons[i].filterMode = FilterMode.Point;
-                EditorGUI.DrawPreviewTexture(new Rect((EditorGUIUtility.currentViewWidth) - (k_tHW * 2.5f), r.y, k_tHW, k_tHW), spriteIcons[i]);
+                EditorGUI.DrawPreviewTexture(new Rect((EditorGUIUtility.currentViewWidth) - (k_spriteWH * 2.5f), r.y, k_spriteWH, k_spriteWH), spriteIcons[i]);
                 EditorGUILayout.EndVertical();
                 EditorGUILayout.Space();
             }
@@ -250,69 +262,107 @@ namespace UnityEngine.Tilemaps {
         }
 
         private void createBitMaskCalculator() {
-            Rect BitMaskFoldoutRect = new Rect(EditorGUIUtility.currentViewWidth-(k_tHW * 1.25f)-20f, 118f, EditorGUIUtility.currentViewWidth, k_tHW*1.25f);
 
-            Rect matrixRect = new Rect(BitMaskFoldoutRect.x, BitMaskFoldoutRect.y, k_tHW*1.25f, k_tHW*1.25f);
+            // Binary directional settings
+            Rect binDirRect = new Rect(EditorGUIUtility.currentViewWidth - (k_spriteWH * 1.25f) - 20f, 118f, k_spriteWH*1.25f, k_spriteWH*1.25f);
             Handles.color = EditorGUIUtility.isProSkin ? new Color(1f, 1f, 1f, 0.2f) : new Color(0f, 0f, 0f, 0.2f);
-            int index = 0;
-            float w = matrixRect.width / 3f;
-            float h = matrixRect.height / 3f;
+            // Binary directional grid cell width/height
+            float binDirWH = binDirRect.width / 3f;
 
             GUIStyle BitMaskValuesStyle = new GUIStyle();
             BitMaskValuesStyle.alignment = TextAnchor.MiddleCenter;
-            BitMaskValuesStyle.normal.textColor = new Color(1f, 1f, 1f);
-            BitMaskValuesStyle.normal.background = MakeTex((int)w, (int)h, new Color(0.5f, 0.7f, 1f, 0.5f));
+            BitMaskValuesStyle.normal.textColor = k_textWhite;
+            BitMaskValuesStyle.normal.background = MakeTex((int)binDirWH, (int)binDirWH, k_binDirButtonOffColor);
 
             GUIStyle BitMaskTotalStyle = new GUIStyle();
             BitMaskTotalStyle.alignment = TextAnchor.MiddleCenter;
-            BitMaskTotalStyle.font = Font.CreateDynamicFontFromOSFont("Arial", 20);
+            BitMaskTotalStyle.fontSize = 20;
 
+            GUIStyle BinDirDirectionStringStyle = new GUIStyle();
+            BinDirDirectionStringStyle.alignment = TextAnchor.MiddleLeft;
+            BinDirDirectionStringStyle.normal.textColor = new Color(0f,0.5f,0f);
+            BinDirDirectionStringStyle.fontSize = 10;
 
-            // Draw matrix grid
+            GUIStyle BinDirGridDirectionsStyle = new GUIStyle();
+            BinDirGridDirectionsStyle.alignment = TextAnchor.UpperCenter;
+            BinDirGridDirectionsStyle.normal.textColor = k_cellTextDarkBlue;
+            BinDirGridDirectionsStyle.fontSize = 8;
+
+            m_binDirString = "// ";
+
+            // Draw Binary directional grid
             for (int y = 0; y <=3; y++) {
-                float top = matrixRect.yMin + y * h;
-                Handles.DrawLine(new Vector3(matrixRect.xMin, top), new Vector3(matrixRect.xMax, top));
+                float top = binDirRect.yMin + y * binDirWH;
+                Handles.DrawLine(new Vector3(binDirRect.xMin, top), new Vector3(binDirRect.xMax, top));
             }
             for (int x = 0; x <= 3; x++) {
-                float left = matrixRect.xMin + x * w;
-                Handles.DrawLine(new Vector3(left, matrixRect.yMin), new Vector3(left, matrixRect.yMax));
+                float left = binDirRect.xMin + x * binDirWH;
+                Handles.DrawLine(new Vector3(left, binDirRect.yMin), new Vector3(left, binDirRect.yMax));
             }
             Handles.color = Color.white;
 
+            int binDirCellIndex = 0;
             for (int y = 0; y <= 2; y++) {
                 for (int x = 0; x <= 2; x++) {
 
-                    Rect r = new Rect(matrixRect.x + (w * x) - 1, matrixRect.y + (h * y) - 1, w + 1, h + 1);
+                    Rect r = new Rect(binDirRect.x + (binDirWH * x) - 1, binDirRect.y + (binDirWH * y) - 1, binDirWH + 1, binDirWH + 1);
 
                     if (x != 1 || y != 1) {
                         if (Event.current.type == EventType.MouseDown && r.Contains(Event.current.mousePosition) && Event.current.button == 0) {
-                            GUI.changed = true;
+
                             Event.current.Use();
 
-                            if (m_selectedBitMaskValues[index] == 0) {
-                                m_selectedBitMaskValues[index] = 1;
+                            // Set selected states for binary directional cells
+                            if (m_binDirSelectedStates[binDirCellIndex] == 0) {
+                                m_binDirSelectedStates[binDirCellIndex] = 1;
                             } else {
-                                m_selectedBitMaskValues[index] = 0;
+                                m_binDirSelectedStates[binDirCellIndex] = 0;
                             }
 
-                            sumBitMaskValues(index);
+                            sumBitMaskValues(binDirCellIndex);
                         }
 
-                        if (m_selectedBitMaskValues[index] == 0) {
-                            BitMaskValuesStyle.normal.background = MakeTex((int)w, (int)h, new Color(0.5f, 0.7f, 1f, 0.5f));
+                        // Set background color of binary directional cells
+                        if (m_binDirSelectedStates[binDirCellIndex] == 0) {
+                            BitMaskValuesStyle.normal.background = MakeTex((int)binDirWH, (int)binDirWH, k_binDirButtonOffColor);
                         } else {
-                            BitMaskValuesStyle.normal.background = MakeTex((int)w, (int)h, new Color(0.5f, 0.7f, 1f, 1f));
+                            BitMaskValuesStyle.normal.background = MakeTex((int)binDirWH, (int)binDirWH, k_binDirButtonOnColor);
                         }
 
-                        GUI.Box(r, k_BitMaskValues[index].ToString(), BitMaskValuesStyle);
+                        GUI.Box(r, k_bitMaskValues[binDirCellIndex].ToString(), BitMaskValuesStyle);
+
+                        // Set correct direction text alignment
+                        if(y == 0 && x == 0) { BinDirGridDirectionsStyle.alignment = TextAnchor.UpperLeft; }
+                        else if(y == 0 && x == 1){ BinDirGridDirectionsStyle.alignment = TextAnchor.UpperCenter; }
+                        else if(y == 0 && x == 2){ BinDirGridDirectionsStyle.alignment = TextAnchor.UpperRight; }
+                        else if (y == 1 && x == 0) { BinDirGridDirectionsStyle.alignment = TextAnchor.MiddleLeft; }
+                        else if (y == 1 && x == 2) { BinDirGridDirectionsStyle.alignment = TextAnchor.MiddleRight; }
+                        else if (y == 2 && x == 0) { BinDirGridDirectionsStyle.alignment = TextAnchor.LowerLeft; }
+                        else if (y == 2 && x == 1) { BinDirGridDirectionsStyle.alignment = TextAnchor.LowerCenter; }
+                        else if (y == 2 && x == 2) { BinDirGridDirectionsStyle.alignment = TextAnchor.LowerRight; }
+
+                        GUI.Box(r, m_binDirDirections[binDirCellIndex], BinDirGridDirectionsStyle);
                     }
 
-                    index++;
+                    binDirCellIndex++;
                 }
             }
 
-            GUI.Box(new Rect(matrixRect.x - (matrixRect.width * 1.625f), matrixRect.y, matrixRect.width, matrixRect.height), m_BitMaskTotal.ToString(), BitMaskTotalStyle);
+            for(int i = 0; i < m_binDirSelectedStates.Length; i++) {
+                if (m_binDirSelectedStates[i] == 1) {
+                    m_binDirString += m_binDirDirections[i] + " ";
+                }
+            }
 
+            // Selected direction string as code comment for quicker pasting next to your BitMask values in code for referencing later in custom tile scripts.
+            if (m_binDirString != "// ") {
+                EditorGUI.TextArea(new Rect(binDirRect.x - (binDirRect.width * 1.9f), binDirRect.y, binDirRect.width, binDirRect.height / 3), m_binDirString, BinDirDirectionStringStyle);
+            }
+
+            // Bit Mask Value
+            EditorGUI.TextArea(new Rect(binDirRect.x - (binDirRect.width * 1.625f), binDirRect.y, binDirRect.width, binDirRect.height), m_bitMaskTotal.ToString(), BitMaskTotalStyle);
+
+            // Lazy way to get spacing. Might mess up on different size screens
             for (int i = 0; i < 14; i++) { EditorGUILayout.Space(); }
         }
 
@@ -324,6 +374,7 @@ namespace UnityEngine.Tilemaps {
         }
 
         private Texture2D MakeTex(int width, int height, Color col) {
+            // Used for GUI.Box background colors
             Color[] pix = new Color[width * height];
             for (int i = 0; i < pix.Length; ++i) {
                 pix[i] = col;
@@ -334,8 +385,10 @@ namespace UnityEngine.Tilemaps {
             return result;
         }
 
-        private void sumBitMaskValues(int index) {
-            m_BitMaskTotal += k_BitMaskValues[index] * (m_selectedBitMaskValues[index] == 0 ? -1 : m_selectedBitMaskValues[index]);
+        private void sumBitMaskValues(int binDirCellIndex) {
+
+            // pow2 value * binaryValue (-1 if 0 to subtract pow2 value from BitMaskTotal)
+            m_bitMaskTotal += k_bitMaskValues[binDirCellIndex] * (m_binDirSelectedStates[binDirCellIndex] == 0 ? -1 : m_binDirSelectedStates[binDirCellIndex]);
         }
     }
 #endif
