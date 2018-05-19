@@ -77,43 +77,22 @@ namespace UnityEngine.Tilemaps {
 
             switch (mask) {
 
-                case 15:                // nw,n,ne,w
-                case 11: return 3;      // nw,n,w
+                case 11: return 3;      // nw n w
 
-                case 23:                // nw,n,ne,e
-                case 150:               // nw,n,sw,w
-                case 22: return 5;      // n,ne,e
+                case 22: return 5;      // n ne e
 
-                case 190:               // n,ne,e,sw,w
-                case 63:                // nw,n,ne,e,sw,w
-                case 31:                // nw,n,ne,w
-                case 7:                 // ne,n,nw
-                case 2: return 7;       // n
+                case 31: return 7;      // nw n ne w e
 
-                case 104: return 10;    // s,sw,w
+                case 208: return 12;    // e s se
 
-                case 235:               // nw,n,se,s,sw,w
-                case 111:               // nw,n,ne,s,sw,w
-                case 107:               // nw,n,s,sw,w
-                case 41:                // nw,w,sw
-                case 8: return 11;      // e
+                case 214: return 13;    // n ne e s se
 
-                case 240:               // e,se,s,sw
-                case 208: return 12;    // s,se,e
+                case 248: return 14;    // w e sw s se
 
-                case 214:               // n,ne,e,se,s
-                case 215:               // nw,n,ne,e,se,s
-                case 148:               // ne,e,se
-                case 16: return 13;     // w
+                case 104: return 10;    // w sw s
 
-                case 124:               // ne,e,s,sw,w
-                case 248:               // e,se,s,sw,w
-                case 224:               // se,s,sw
-                case 64: return 14;     // s
+                case 107: return 11;    // nw n w sw s
 
-                case 127:               // nw,n,ne,e,s,sw,w
-                case 223:               // nw,n,ne,e,se,s,w
-                case 90:                // n,s,e,w
                 case 255: return 15;    // all
 
             }
@@ -129,17 +108,17 @@ namespace UnityEngine.Tilemaps {
 
                 case 16: return 2;      // e
 
-                case 10: return 3;      // w,s
+                case 10: return 3;      // w s
 
                 case 8: return 4;       // w
 
-                case 18: return 5;      // n,e
+                case 18: return 5;      // n e
 
                 case 64: return 8;      // s
 
-                case 72: return 10;     // w,s
+                case 72: return 10;     // w s
 
-                case 80: return 12;     // e,s
+                case 80: return 12;     // e s
             }
             return 0;
         }
