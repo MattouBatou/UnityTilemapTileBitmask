@@ -11,8 +11,8 @@ public class BitMaskCalculator : EditorWindow {
     private int m_bitMaskTotal = 0;
     private string m_binDirString = "// ";
     private int[] m_binDirSelectedStates = new int[] { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-    private string[] m_binDirDirections = new string[] { "nw", "n", "ne", "w", "", "e", "sw", "s", "se" };
-    private static readonly int[] k_bitMaskValues = { 1, 2, 4, 8, 0, 16, 32, 64, 128 };
+    private string[] m_binDirDirections = new string[] { "nw", "n", "ne", "w", "c", "e", "sw", "s", "se" };
+    private static readonly int[] k_bitMaskValues = { 1, 2, 4, 8, 256, 16, 32, 64, 128 };
 
     // Colors
     private static readonly Color k_binDirButtonOffColor = new Color(0.5f, 0.7f, 1f, 0.5f);
@@ -90,35 +90,38 @@ public class BitMaskCalculator : EditorWindow {
 
                 Rect gridCellRect = new Rect(binDirRect.x + (binDirWH * x) - 1, binDirRect.y + (binDirWH * y) - 1, binDirWH + 1, binDirWH + 1);
 
-                if (x != 1 || y != 1) {
-                    if (Event.current.type == EventType.MouseDown && gridCellRect.Contains(Event.current.mousePosition) && Event.current.button == 0) {
+                //if (x != 1 || y != 1) {
+                if (Event.current.type == EventType.MouseDown && gridCellRect.Contains(Event.current.mousePosition) && Event.current.button == 0) {
 
-                        Event.current.Use();
+                    Event.current.Use();
 
-                        // Set selected states for binary directional cells
-                        if (m_binDirSelectedStates[binDirCellIndex] == 0) {
-                            m_binDirSelectedStates[binDirCellIndex] = 1;
-                        } else {
-                            m_binDirSelectedStates[binDirCellIndex] = 0;
-                        }
-
-                        sumBitMaskValues(binDirCellIndex);
-                    }
-
-                    // Set background color of binary directional cells
+                    // Set selected states for binary directional cells
                     if (m_binDirSelectedStates[binDirCellIndex] == 0) {
-                        BitMaskValuesStyle.normal.background = MakeTex((int)binDirWH, (int)binDirWH, k_binDirButtonOffColor);
+                        m_binDirSelectedStates[binDirCellIndex] = 1;
                     } else {
-                        BitMaskValuesStyle.normal.background = MakeTex((int)binDirWH, (int)binDirWH, k_binDirButtonOnColor);
+                        m_binDirSelectedStates[binDirCellIndex] = 0;
                     }
 
-                    GUI.Box(gridCellRect, k_bitMaskValues[binDirCellIndex].ToString(), BitMaskValuesStyle);
-
-                    // Set correct direction text alignment
-                    if (y == 0 && x == 0) { BinDirGridDirectionsStyle.alignment = TextAnchor.UpperLeft; } else if (y == 0 && x == 1) { BinDirGridDirectionsStyle.alignment = TextAnchor.UpperCenter; } else if (y == 0 && x == 2) { BinDirGridDirectionsStyle.alignment = TextAnchor.UpperRight; } else if (y == 1 && x == 0) { BinDirGridDirectionsStyle.alignment = TextAnchor.MiddleLeft; } else if (y == 1 && x == 2) { BinDirGridDirectionsStyle.alignment = TextAnchor.MiddleRight; } else if (y == 2 && x == 0) { BinDirGridDirectionsStyle.alignment = TextAnchor.LowerLeft; } else if (y == 2 && x == 1) { BinDirGridDirectionsStyle.alignment = TextAnchor.LowerCenter; } else if (y == 2 && x == 2) { BinDirGridDirectionsStyle.alignment = TextAnchor.LowerRight; }
-
-                    GUI.Box(gridCellRect, m_binDirDirections[binDirCellIndex], BinDirGridDirectionsStyle);
+                    sumBitMaskValues(binDirCellIndex);
                 }
+
+                // Set background color of binary directional cells
+                if (m_binDirSelectedStates[binDirCellIndex] == 0) {
+                    BitMaskValuesStyle.normal.background = MakeTex((int)binDirWH, (int)binDirWH, k_binDirButtonOffColor);
+                } else {
+                    BitMaskValuesStyle.normal.background = MakeTex((int)binDirWH, (int)binDirWH, k_binDirButtonOnColor);
+                }
+
+                GUI.Box(gridCellRect, k_bitMaskValues[binDirCellIndex].ToString(), BitMaskValuesStyle);
+
+                // Set correct direction text alignment
+                if (y == 0 && x == 0) { BinDirGridDirectionsStyle.alignment = TextAnchor.UpperLeft; } else if (y == 0 && x == 1) { BinDirGridDirectionsStyle.alignment = TextAnchor.UpperCenter; } else if (y == 0 && x == 2) { BinDirGridDirectionsStyle.alignment = TextAnchor.UpperRight; } else if (y == 1 && x == 0) { BinDirGridDirectionsStyle.alignment = TextAnchor.MiddleLeft; } else if (y == 1 && x == 2) { BinDirGridDirectionsStyle.alignment = TextAnchor.MiddleRight; } else if (y == 2 && x == 0) { BinDirGridDirectionsStyle.alignment = TextAnchor.LowerLeft; } else if (y == 2 && x == 1) { BinDirGridDirectionsStyle.alignment = TextAnchor.LowerCenter; } else if (y == 2 && x == 2) { BinDirGridDirectionsStyle.alignment = TextAnchor.LowerRight; }
+                else if (y == 1 && x == 1) {
+                    Debug.Log("Hello");
+                    BinDirGridDirectionsStyle.alignment = TextAnchor.LowerCenter; }
+
+                GUI.Box(gridCellRect, m_binDirDirections[binDirCellIndex], BinDirGridDirectionsStyle);
+                //}
 
                 binDirCellIndex++;
             }

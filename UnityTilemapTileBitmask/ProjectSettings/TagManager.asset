@@ -13,8 +13,8 @@ TagManager:
   - UI
   - 
   - 
-  - 4-bitMap
-  - 
+  - terrain
+  - water
   - 
   - 
   - 
@@ -41,6 +41,9 @@ TagManager:
   - name: Default
     uniqueID: 0
     locked: 0
-  - name: 4-bitMap
+  - name: water
+    uniqueID: 4183479347
+    locked: 0
+  - name: terrain
     uniqueID: 3427026437
     locked: 0
