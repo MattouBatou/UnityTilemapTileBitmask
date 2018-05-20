@@ -36,7 +36,6 @@ public class BitMaskCalculator : EditorWindow {
         BitMaskCalculator window = (BitMaskCalculator)EditorWindow.GetWindow(typeof(BitMaskCalculator), false, "Bitmask Calculator", true);
         window.maxSize = new Vector2((binDirRect.width * 2.5f) + k_baseUnit, binDirRect.height + (k_baseUnit * 2));
         window.minSize = window.maxSize;
-        window.Show();
     }
 
     private void OnGUI() {
@@ -44,6 +43,10 @@ public class BitMaskCalculator : EditorWindow {
     }
 
     private void createBitMaskCalculator() {
+        // Have to set values again due to positions being incorrect when set onload.
+        binDirRect = new Rect(k_baseUnit, k_baseUnit, k_gridWH * 1.25f, k_gridWH * 1.25f);
+        directionsTextRect = new Rect(binDirRect.x + (binDirRect.width * 1.25f), binDirRect.y, binDirRect.width, binDirRect.height / 3);
+        bitMaskValueRect = new Rect(binDirRect.x + (binDirRect.width), binDirRect.y, binDirRect.width, binDirRect.height);
         binDirWH = (k_gridWH * 1.25f) / 3f;
 
         // Binary directional settings
@@ -66,7 +69,7 @@ public class BitMaskCalculator : EditorWindow {
         GUIStyle BinDirGridDirectionsStyle = new GUIStyle();
         BinDirGridDirectionsStyle.alignment = TextAnchor.UpperCenter;
         BinDirGridDirectionsStyle.normal.textColor = k_cellTextDarkBlue;
-        BinDirGridDirectionsStyle.fontSize = 8;
+        BinDirGridDirectionsStyle.fontSize = 10;
 
         m_binDirString = "// ";
 

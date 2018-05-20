@@ -72,15 +72,55 @@ namespace UnityEngine.Tilemaps {
 
             switch (mask) {
 
+                case 47:                // nw n ne w sw
+                case 15:                // nw n ne w
+                case 43:                // nw n w sw
                 case 11: return 1;      // nw n w
+
+                case 151:               // nw n ne e se
+                case 150:               // n ne e se
+                case 23:                // nw n ne e
                 case 22: return 2;      // n ne e
+
+                case 63:                // nw n ne w e sw
+                case 159:               // nw n ne w e se
+                case 191:               // nw n ne w e sw se
                 case 31: return 3;      // nw n ne w e
-                case 104: return 4;    // w sw s
-                case 107: return 5;    // nw n w sw s
-                case 208: return 6;    // e s se
-                case 214: return 7;    // n ne e s se
-                case 248: return 8;    // w e sw s se
-                case 255: return 9;    // all
+
+                case 233:               // nw w sw s se
+                case 105:               // nw w sw s
+                case 232:               // w sw s se
+                case 104: return 4;     // w sw s
+
+                case 111:               // nw n ne w sw s
+                case 239:               // nw n ne w sw s se
+                case 235:               // nw n w sw s se
+                case 107: return 5;     // nw n w sw s
+
+                case 244:               // ne e sw s se
+                case 212:               // ne e s se
+                case 240:               // e sw s se
+                case 208: return 6;     // e s se
+
+                case 246:               // n ne e sw s se
+                case 247:               // nw n ne e sw s se
+                case 215:               // nw n ne e s se
+                case 214: return 7;     // n ne e s se
+
+                case 249:               // nw w e sw s se
+                case 252:               // ne w e sw s se
+                case 253:               // nw ne w e sw s se
+                case 248: return 8;     // w e sw s se
+
+                case 254: return 10;    // n ne w e sw s se
+
+                case 251: return 11;    // nw n w e sw s se
+
+                case 127: return 12;    // nw n ne w e sw s
+
+                case 223: return 13;    // nw n ne w e s se
+
+                case 255: return 9;     // all
             }
             return 0;
         }
@@ -103,36 +143,29 @@ namespace UnityEngine.Tilemaps {
     [CanEditMultipleObjects]
     internal class BM_TerrainAreaTileEditor:Editor {
         private BM_TerrainAreaTile tile { get { return (target as BM_TerrainAreaTile); } }
-        private const int k_bitSpriteCount = 10;
+        private const int k_bitSpriteCount = 14;
         private const float k_spriteWH = 16f * 4f;
 
         // Tile Example Sprite Icons
-        private const string s_spriteIcon0 = "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQAQMAAAAlPW0iAAAABlBMVEUB/wAAAACkX63mAAAAFklEQVQI12MAgvp/IJTAhgdB1ADVAgDvdAnxdKVuwAAAAABJRU5ErkJggg==";
-        private const string s_spriteIcon1 = "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQAQMAAAAlPW0iAAAABlBMVEUB/wAAAACkX63mAAAAE0lEQVQI12MAATbCqP4fEAGVAgAZAQND5NXRlgAAAABJRU5ErkJggg==";
-        private const string s_spriteIcon2 = "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQAQMAAAAlPW0iAAAABlBMVEUB/wAAAACkX63mAAAAE0lEQVQI12MAggQiUP0/IAKqBQCNTQd7L2yUwAAAAABJRU5ErkJggg==";
-        private const string s_spriteIcon3 = "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQAQMAAAAlPW0iAAAABlBMVEUB/wAAAACkX63mAAAAEElEQVQI12MgEtT/AyIgDQARjQL7N/HyZAAAAABJRU5ErkJggg==";
-        private const string s_spriteIcon4 = "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQAQMAAAAlPW0iAAAABlBMVEUB/wAAAACkX63mAAAAE0lEQVQI12MAgvp/IMTARgRiAACCeQNDJCF45wAAAABJRU5ErkJggg==";
-        private const string s_spriteIcon5 = "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQAQMAAAAlPW0iAAAABlBMVEUB/wAAAACkX63mAAAADklEQVQI12MAATaiEQMAB+YAVQErUaIAAAAASUVORK5CYII=";
-        private const string s_spriteIcon6 = "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQAQMAAAAlPW0iAAAABlBMVEUB/wAAAACkX63mAAAAE0lEQVQI12MAgvp/IJTAQBABAQDddQd7cGz9TwAAAABJRU5ErkJggg==";
-        private const string s_spriteIcon7 = "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQAQMAAAAlPW0iAAAABlBMVEUB/wAAAACkX63mAAAAD0lEQVQI12MAggRiERAAAIDQBUEcq+81AAAAAElFTkSuQmCC";
-        private const string s_spriteIcon8 = "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQAQMAAAAlPW0iAAAABlBMVEUB/wAAAACkX63mAAAAEElEQVQI12MAgvp/IEQcAAB8tQL7Ry7GCQAAAABJRU5ErkJggg==";
-        private const string s_spriteIcon9 = "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQAQMAAAAlPW0iAAAAA1BMVEUB/wA1nKqfAAAAC0lEQVQI12MgEQAAADAAAWV61nwAAAAASUVORK5CYII=";
-
         private static Texture2D[] s_spriteIcons;
         private static Texture2D[] spriteIcons {
             get {
-                if(s_spriteIcons == null) {
+                if (s_spriteIcons == null) {
                     s_spriteIcons = new Texture2D[k_bitSpriteCount];
-                    s_spriteIcons[0] = Base64ToTexture(s_spriteIcon0);
-                    s_spriteIcons[1] = Base64ToTexture(s_spriteIcon1);
-                    s_spriteIcons[2] = Base64ToTexture(s_spriteIcon2);
-                    s_spriteIcons[3] = Base64ToTexture(s_spriteIcon3);
-                    s_spriteIcons[4] = Base64ToTexture(s_spriteIcon4);
-                    s_spriteIcons[5] = Base64ToTexture(s_spriteIcon5);
-                    s_spriteIcons[6] = Base64ToTexture(s_spriteIcon6);
-                    s_spriteIcons[7] = Base64ToTexture(s_spriteIcon7);
-                    s_spriteIcons[8] = Base64ToTexture(s_spriteIcon8);
-                    s_spriteIcons[9] = Base64ToTexture(s_spriteIcon9);
+                    s_spriteIcons[0] = Base64ToTexture("iVBORw0KGgoAAAANSUhEUgAAABAAAAAQAQMAAAAlPW0iAAAABlBMVEUB/wAAAACkX63mAAAAEElEQVQI12OAA/kf+BAMAAABkgrnNcHeUAAAAABJRU5ErkJggg==");
+                    s_spriteIcons[1] = Base64ToTexture("iVBORw0KGgoAAAANSUhEUgAAABAAAAAQAQMAAAAlPW0iAAAABlBMVEUAAAAB/wA3gS6KAAAAEElEQVQI12Ng4CeM/v+HIwBEvgityIdaBgAAAABJRU5ErkJggg==");
+                    s_spriteIcons[2] = Base64ToTexture("iVBORw0KGgoAAAANSUhEUgAAABAAAAAQAQMAAAAlPW0iAAAABlBMVEUAAAAB/wA3gS6KAAAAEElEQVQI12P4wEAY/f8PRwCHLxM5+BugggAAAABJRU5ErkJggg==");
+                    s_spriteIcons[3] = Base64ToTexture("iVBORw0KGgoAAAANSUhEUgAAABAAAAAQAQMAAAAlPW0iAAAABlBMVEUAAAAB/wA3gS6KAAAADklEQVQI12MgEvz/D0EAGxUF+zzBmK8AAAAASUVORK5CYII=");
+                    s_spriteIcons[4] = Base64ToTexture("iVBORw0KGgoAAAANSUhEUgAAABAAAAAQAQMAAAAlPW0iAAAABlBMVEUAAAAB/wA3gS6KAAAAEElEQVQI12P4/x+BGPgJIgBbPQitJKcIoAAAAABJRU5ErkJggg==");
+                    s_spriteIcons[5] = Base64ToTexture("iVBORw0KGgoAAAANSUhEUgAAABAAAAAQAQMAAAAlPW0iAAAABlBMVEUAAAAB/wA3gS6KAAAADUlEQVQI12NgYCcJAQAKeABxy0hRBgAAAABJRU5ErkJggg==");
+                    s_spriteIcons[6] = Base64ToTexture("iVBORw0KGgoAAAANSUhEUgAAABAAAAAQAQMAAAAlPW0iAAAABlBMVEUAAAAB/wA3gS6KAAAAEElEQVQI12P4/x+BPjAQRAAfHhM5IM0xRQAAAABJRU5ErkJggg==");
+                    s_spriteIcons[7] = Base64ToTexture("iVBORw0KGgoAAAANSUhEUgAAABAAAAAQAQMAAAAlPW0iAAAABlBMVEUAAAAB/wA3gS6KAAAADUlEQVQI12N4wEASAgBXPw4BoMIRRgAAAABJRU5ErkJggg==");
+                    s_spriteIcons[8] = Base64ToTexture("iVBORw0KGgoAAAANSUhEUgAAABAAAAAQAQMAAAAlPW0iAAAABlBMVEUAAAAB/wA3gS6KAAAADklEQVQI12P4/x+KiAMABDoF+5gADEUAAAAASUVORK5CYII=");
+                    s_spriteIcons[9] = Base64ToTexture("iVBORw0KGgoAAAANSUhEUgAAABAAAAAQAQMAAAAlPW0iAAAAA1BMVEUB/wA1nKqfAAAAC0lEQVQI12MgEQAAADAAAWV61nwAAAAASUVORK5CYII=");
+                    s_spriteIcons[10] = Base64ToTexture("iVBORw0KGgoAAAANSUhEUgAAABAAAAAQAQMAAAAlPW0iAAAABlBMVEUAAAAB/wA3gS6KAAAADklEQVQI12N4wABBRAIAc7ACoTz4OKoAAAAASUVORK5CYII=");
+                    s_spriteIcons[11] = Base64ToTexture("iVBORw0KGgoAAAANSUhEUgAAABAAAAAQAQMAAAAlPW0iAAAABlBMVEUAAAAB/wA3gS6KAAAADklEQVQI12NgYIci4gAAA7cAFr01aMAAAAAASUVORK5CYII=");
+                    s_spriteIcons[12] = Base64ToTexture("iVBORw0KGgoAAAANSUhEUgAAABAAAAAQAQMAAAAlPW0iAAAABlBMVEUAAAAB/wA3gS6KAAAADUlEQVQI12MgFrBDEAAAhAAW20o0MwAAAABJRU5ErkJggg==");
+                    s_spriteIcons[13] = Base64ToTexture("iVBORw0KGgoAAAANSUhEUgAAABAAAAAQAQMAAAAlPW0iAAAABlBMVEUAAAAB/wA3gS6KAAAADUlEQVQI12MgEjyAIgANUAKhKazXhgAAAABJRU5ErkJggg==");
                 }
                 return s_spriteIcons;
             }
